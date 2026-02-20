@@ -1,0 +1,19 @@
+# Flutter/Dart
+# Build output
+build/
+# Flutter/Dart dependencies
+**/Pods/**
+**/pubspec.lock
+# iOS specific
+ios/Flutter/.last_build_id
+# Android specific
+*.iml
+*.gradle
+*.hprof
+# Files created by Android Studio
+*.idea/
+*.jks
+*.keystore
+# Other
+.DS_Store
+*.swp
