@@ -19,6 +19,19 @@ class AIService {
     return _apiKey != null && _apiKey!.isNotEmpty;
   }
 
+  /// Piccola chiamata di test per verificare che la chiave sia valida.
+  Future<bool> testApiKey() async {
+    final model = _model;
+    if (model == null) return false;
+    try {
+      final response = await model.generateContent([Content.text('ok')]);
+      final text = response.text?.toLowerCase() ?? '';
+      return text.contains('ok');
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Analizza una foto e restituisce category_id, confidence, description
   Future<Map<String, dynamic>?> analyzeImage({
     required String imagePath,

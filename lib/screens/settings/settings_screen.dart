@@ -8,6 +8,7 @@ import '../../core/constants/app_constants.dart';
 import '../cloud/cloud_settings_screen.dart';
 import '../person/person_list_screen.dart';
 import '../category/category_edit_screen.dart';
+import 'api_key_setup_screen.dart';
 import 'profile_switch_screen.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/ai_provider.dart';
@@ -52,9 +53,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('API Gemini', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Attivazione IA (consigliata)', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          const Text('Inserisci la chiave API da aistudio.google.com/apikey per abilitare l\'analisi IA.'),
+          const Text('Usa la procedura guidata per ottenere la tua chiave personale da Google e attivare l\'analisi IA.'),
+          const SizedBox(height: 8),
+          FilledButton.icon(
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ApiKeySetupScreen()),
+              );
+              await _loadApiKey();
+            },
+            icon: const Icon(Icons.auto_fix_high),
+            label: const Text('Configura IA in 1 minuto'),
+          ),
+          const SizedBox(height: 16),
+          const Text('API Gemini (avanzato)', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          const Text('Inserisci manualmente la chiave API da aistudio.google.com/apikey se preferisci non usare la procedura guidata.'),
           const SizedBox(height: 8),
           TextField(
             controller: _apiKeyController,
