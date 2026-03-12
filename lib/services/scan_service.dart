@@ -22,6 +22,7 @@ class ScanService {
     required UserProfile profile,
     required void Function(ScanState) onProgress,
     int maxPhotos = 50,
+    bool incremental = true,
   }) async {
     onProgress(ScanState(status: ScanStatus.scanning, total: 0, processed: 0));
     final hasAccess = await _gallery.hasAccess();
@@ -32,33 +33,36 @@ class ScanService {
         return;
       }
     }
-    final assets = await _gallery.getImageAssets(limit: maxPhotos);
-    final total = assets.length;
-    if (total == 0) {
-      onProgress(ScanState(status: ScanStatus.done, total: 0, processed: 0, results: []));
-      return;
+    Set<String> existingPaths = {};
+    if (incremental) {
+      existingPaths = await _albumRepo.getAnalyzedPhotoPaths();
     }
-    await _folder.createProfileFolderStructure(profile);
+    final allAssets = await _gallery.getImageAssets(limit: maxPhotos * 3);
+    final now = DateTime.now().millisecondsSinceEpoch;
     final threshold = AppConstants.defaultConfidenceThreshold;
     final results = <ScanResult>[];
-    final now = DateTime.now().millisecondsSinceEpoch;
+    int processedCount = 0;
 
-    for (var i = 0; i < assets.length; i++) {
-      final asset = assets[i];
+    await _folder.createProfileFolderStructure(profile);
+
+    for (var i = 0; i < allAssets.length && processedCount < maxPhotos; i++) {
+      final asset = allAssets[i];
       final path = await _gallery.getFilePath(asset);
-      if (path == null) continue;
+      if (path == null || (incremental && existingPaths.contains(path))) continue;
+      processedCount++;
+
       final photoId = _uuid.v4();
       String? categoryId;
       String? categoryName;
       String? categoryFolderName;
       String? emoji;
+      bool categorySplitByYear = false;
       double confidence = 0.0;
       String? description;
       bool toReview = true;
       int? year;
       int? dateTaken = now;
 
-      // Estrai anno e data da metadati asset (createDateSecond / EXIF)
       final secs = asset.createDateSecond;
       if (secs != null) {
         final createDate = DateTime.fromMillisecondsSinceEpoch(secs * 1000);
@@ -78,6 +82,7 @@ class ScanService {
           categoryName = cat.name;
           categoryFolderName = cat.folderName;
           emoji = cat.emoji;
+          categorySplitByYear = cat.splitByYear;
         }
       }
 
@@ -88,7 +93,8 @@ class ScanService {
         sourcePath: path,
         categoryFolderName: folderNameForCopy,
         profileName: profile.name,
-        year: year,
+        year: categorySplitByYear ? year : null,
+        splitByYear: categorySplitByYear,
         toReview: toReview,
       );
 
@@ -106,7 +112,8 @@ class ScanService {
       await _albumRepo.insertPhoto(photo);
 
       if (!toReview && categoryName != null) {
-        var album = await _ensureAlbum(profile, categoryName, emoji ?? '📁', categoryId, localPath);
+        final albumName = categorySplitByYear && year != null ? '$categoryName $year' : categoryName;
+        var album = await _ensureAlbum(profile, albumName, emoji ?? '📁', categoryId, localPath);
         if (album != null) {
           await _albumRepo.updateAlbumPhotoCount(album.id, (album.photoCount) + 1);
         }
@@ -123,10 +130,10 @@ class ScanService {
         year: year,
         toReview: toReview,
       ));
-      onProgress(ScanState(status: ScanStatus.scanning, total: total, processed: i + 1, results: List.from(results)));
+      onProgress(ScanState(status: ScanStatus.scanning, total: maxPhotos, processed: processedCount, results: List.from(results)));
     }
 
-    onProgress(ScanState(status: ScanStatus.done, total: total, processed: total, results: results));
+    onProgress(ScanState(status: ScanStatus.done, total: maxPhotos, processed: processedCount, results: results));
   }
 
   Future<Album?> _ensureAlbum(UserProfile profile, String name, String emoji, String? categoryId, String? folderPath) async {

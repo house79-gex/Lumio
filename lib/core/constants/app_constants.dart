@@ -12,4 +12,5 @@ class AppConstants {
   static const String prefsKeyActiveProfileId = 'active_profile_id';
   static const String prefsKeyBaseFolderPath = 'base_folder_path';
   static const String prefsKeyGeminiApiKey = 'gemini_api_key';
+  static const String prefsKeyLastScanAt = 'last_scan_at';
 }

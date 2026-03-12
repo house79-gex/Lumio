@@ -56,6 +56,20 @@ class SettingsRepository {
     }
   }
 
+  Future<int?> getLastScanAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(AppConstants.prefsKeyLastScanAt);
+  }
+
+  Future<void> setLastScanAt(int? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) {
+      await prefs.remove(AppConstants.prefsKeyLastScanAt);
+    } else {
+      await prefs.setInt(AppConstants.prefsKeyLastScanAt, value);
+    }
+  }
+
   static const String _keyProfiles = 'user_profiles';
 
   Future<void> saveProfile(UserProfile profile) async {
@@ -74,21 +88,22 @@ class SettingsRepository {
   Future<List<UserProfile>> getProfiles() async {
     final prefs = await SharedPreferences.getInstance();
     final list = prefs.getStringList(_keyProfiles) ?? [];
-    return list.map((e) {
-      final map = jsonDecode(e) as Map<String, dynamic>;
-      final base = map['baseProfession'] as Map<String, dynamic>;
-      final cats = (map['categories'] as List<dynamic>).map((c) => ProfessionCategory.fromJson(c as Map<String, dynamic>)).toList();
-      return UserProfile(
-        id: map['id'] as String,
-        name: map['name'] as String,
-        emoji: map['emoji'] as String? ?? '👤',
-        baseProfession: Profession.fromJson(base),
-        categories: cats,
-        baseFolderPath: map['baseFolderPath'] as String? ?? '',
-        cloudSyncEnabled: Map<String, bool>.from(map['cloudSyncEnabled'] as Map? ?? {}),
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
-      );
-    }).toList();
+    return list.map((e) => UserProfile.fromJson(jsonDecode(e) as Map<String, dynamic>)).toList();
+  }
+
+  /// Esporta il profilo attivo come JSON. Ritorna null se non c'è profilo attivo.
+  Future<String?> exportActiveProfileAsJson() async {
+    final p = await getActiveProfile();
+    return p == null ? null : jsonEncode(p.toJson());
+  }
+
+  /// Importa un profilo da JSON, lo salva nella lista e lo imposta come attivo.
+  Future<UserProfile?> importProfileFromJson(String jsonString) async {
+    final map = jsonDecode(jsonString) as Map<String, dynamic>;
+    final profile = UserProfile.fromJson(map);
+    await saveProfile(profile);
+    await setActiveProfileId(profile.id);
+    return profile;
   }
 
   Future<UserProfile?> getActiveProfile() async {

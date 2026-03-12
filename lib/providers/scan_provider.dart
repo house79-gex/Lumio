@@ -26,7 +26,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
     state = const ScanState();
   }
 
-  Future<void> startScan({int maxPhotos = 50, UserProfile? profile}) async {
+  Future<void> startScan({int maxPhotos = 50, bool incremental = true, UserProfile? profile}) async {
     final p = profile ?? _profile.valueOrNull;
     if (p == null) {
       state = ScanState(status: ScanStatus.error, errorMessage: 'Seleziona un profilo');
@@ -37,6 +37,7 @@ class ScanNotifier extends StateNotifier<ScanState> {
       profile: p,
       onProgress: (s) => state = s,
       maxPhotos: maxPhotos,
+      incremental: incremental,
     );
   }
 }

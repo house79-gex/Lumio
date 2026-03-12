@@ -14,6 +14,7 @@ class ScanScreen extends ConsumerStatefulWidget {
 class _ScanScreenState extends ConsumerState<ScanScreen> {
   static const List<int> maxPhotosOptions = [10, 25, 50, 100];
   int _maxPhotos = 25;
+  bool _incremental = true;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +51,14 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                               : (v) {
                                   if (v != null) setState(() => _maxPhotos = v);
                                 },
+                        ),
+                        const SizedBox(height: 12),
+                        CheckboxListTile(
+                          value: _incremental,
+                          onChanged: scanState.status == ScanStatus.scanning ? null : (v) => setState(() => _incremental = v ?? true),
+                          title: const Text('Scansione incrementale'),
+                          subtitle: const Text('Analizza solo foto non già catalogate'),
+                          controlAffinity: ListTileControlAffinity.leading,
                         ),
                       ],
                     ),
@@ -108,7 +117,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   onPressed: scanState.status == ScanStatus.scanning
                       ? null
                       : () async {
-                          ref.read(scanStateProvider.notifier).startScan(maxPhotos: _maxPhotos, profile: profile);
+                          ref.read(scanStateProvider.notifier).startScan(maxPhotos: _maxPhotos, incremental: _incremental, profile: profile);
                         },
                   icon: const Icon(Icons.search),
                   label: Text(scanState.status == ScanStatus.scanning ? 'Scansione in corso...' : 'Avvia scansione'),

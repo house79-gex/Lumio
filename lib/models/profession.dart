@@ -111,6 +111,21 @@ class UserProfile {
         'createdAt': createdAt.millisecondsSinceEpoch,
       };
 
+  factory UserProfile.fromJson(Map<String, dynamic> map) {
+    final base = map['baseProfession'] as Map<String, dynamic>;
+    final cats = (map['categories'] as List<dynamic>).map((c) => ProfessionCategory.fromJson(c as Map<String, dynamic>)).toList();
+    return UserProfile(
+      id: map['id'] as String,
+      name: map['name'] as String,
+      emoji: map['emoji'] as String? ?? '👤',
+      baseProfession: Profession.fromJson(base),
+      categories: cats,
+      baseFolderPath: map['baseFolderPath'] as String? ?? '',
+      cloudSyncEnabled: Map<String, bool>.from(map['cloudSyncEnabled'] as Map? ?? {}),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
+    );
+  }
+
   UserProfile copyWith({
     String? name,
     String? emoji,

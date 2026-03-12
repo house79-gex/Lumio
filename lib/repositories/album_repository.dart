@@ -52,4 +52,11 @@ class AlbumRepository {
     final list = await db.query('photos', orderBy: 'analyzed_at DESC');
     return list.map((e) => Photo.fromJson(Map<String, dynamic>.from(e))).toList();
   }
+
+  /// Insieme dei path già presenti in DB (per scansione incrementale)
+  Future<Set<String>> getAnalyzedPhotoPaths() async {
+    final db = await _db;
+    final list = await db.query('photos', columns: ['path']);
+    return list.map((e) => e['path'] as String).toSet();
+  }
 }

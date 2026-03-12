@@ -22,6 +22,7 @@ class FolderService {
   }
 
   /// Crea la struttura cartelle per un profilo
+  /// Per categorie con splitByYear le sottocartelle anno vengono create al volo durante la copia
   Future<void> createProfileFolderStructure(UserProfile profile) async {
     final base = await getBaseDirectory();
     final profileDir = Directory(p.join(base.path, _sanitize(profile.name)));
@@ -35,11 +36,13 @@ class FolderService {
   }
 
   /// Copia la foto nella cartella corretta
+  /// [splitByYear]: se true e [year] non null, crea sottocartella anno (es. Categoria/2024/)
   Future<String?> copyPhotoToAlbumFolder({
     required String sourcePath,
     required String categoryFolderName,
     required String profileName,
     int? year,
+    bool splitByYear = false,
     String? personName,
     bool toReview = false,
   }) async {
@@ -51,7 +54,9 @@ class FolderService {
       targetDirPath = p.join(base.path, _sanitize(profileName), 'Persone', _sanitize(personName));
     } else {
       targetDirPath = p.join(base.path, _sanitize(profileName), categoryFolderName);
-      if (year != null) targetDirPath = p.join(targetDirPath, year.toString());
+      if (splitByYear && year != null) {
+        targetDirPath = p.join(targetDirPath, year.toString());
+      }
     }
     await Directory(targetDirPath).create(recursive: true);
     final sourceFile = File(sourcePath);
