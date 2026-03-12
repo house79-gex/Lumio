@@ -13,4 +13,7 @@ class AppConstants {
   static const String prefsKeyBaseFolderPath = 'base_folder_path';
   static const String prefsKeyGeminiApiKey = 'gemini_api_key';
   static const String prefsKeyLastScanAt = 'last_scan_at';
+  static const String prefsKeyGroupByYear = 'group_by_year';
+  static const String prefsKeyGroupByMonth = 'group_by_month';
+  static const String prefsKeyGroupBySource = 'group_by_source';
 }

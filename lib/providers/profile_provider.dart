@@ -16,5 +16,15 @@ final profilesListProvider = FutureProvider<List<UserProfile>>((ref) async {
 
 final onboardingDoneProvider = FutureProvider<bool>((ref) async {
   final repo = ref.watch(settingsRepositoryProvider);
-  return repo.isOnboardingDone();
+  try {
+    // Protezione extra: se per qualsiasi motivo SharedPreferences dovesse bloccarsi,
+    // dopo pochi secondi consideriamo l'onboarding "non completato" e mostriamo comunque la welcome.
+    return await repo.isOnboardingDone().timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => false,
+        );
+  } catch (_) {
+    // In caso di errore imprevisto, fallback sicuro: onboarding non fatto -> mostra WelcomeScreen.
+    return false;
+  }
 });

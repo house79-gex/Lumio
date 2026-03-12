@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../album/album_list_screen.dart';
 import '../album/album_detail_screen.dart';
 import '../scan/scan_screen.dart';
 import '../settings/settings_screen.dart';
+import '../settings/api_key_setup_screen.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/albums_provider.dart';
+import '../../providers/ai_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -14,6 +17,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(activeProfileProvider);
     final albumsAsync = ref.watch(albumsForActiveProfileProvider);
+    final aiEnabledAsync = ref.watch(aiEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -50,6 +54,53 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Banner IA non configurata
+                  aiEnabledAsync.when(
+                    data: (enabled) {
+                      if (enabled) return const SizedBox.shrink();
+                      return Card(
+                        color: Colors.amber.shade50,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'IA non ancora configurata',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Per creare album intelligenti in base al contenuto delle foto, attiva ora la chiave IA di Google Gemini.',
+                              ),
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const ApiKeySetupScreen()),
+                                    );
+                                  },
+                                  child: const Text('Configura IA ora'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
@@ -73,6 +124,7 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   albumsAsync.when(
                     data: (albums) {
+                      debugPrint('[HomeScreen] albums per profilo ${profile.id}: ${albums.length}');
                       if (albums.isEmpty) {
                         return Card(
                           child: Padding(

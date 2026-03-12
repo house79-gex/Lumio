@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../providers/scan_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../models/scan_result.dart';
@@ -15,6 +16,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   static const List<int> maxPhotosOptions = [10, 25, 50, 100];
   int _maxPhotos = 25;
   bool _incremental = true;
+  bool _useAi = true;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,31 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                           title: const Text('Scansione incrementale'),
                           subtitle: const Text('Analizza solo foto non già catalogate'),
                           controlAffinity: ListTileControlAffinity.leading,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('Modalità di scansione:'),
+                        const SizedBox(height: 4),
+                        SegmentedButton<bool>(
+                          segments: const [
+                            ButtonSegment<bool>(
+                              value: false,
+                              icon: Icon(Icons.bolt_outlined),
+                              label: Text('Base (senza IA)'),
+                            ),
+                            ButtonSegment<bool>(
+                              value: true,
+                              icon: Icon(Icons.auto_awesome),
+                              label: Text('Completa (con IA)'),
+                            ),
+                          ],
+                          selected: {_useAi},
+                          onSelectionChanged: scanState.status == ScanStatus.scanning
+                              ? null
+                              : (values) {
+                                  setState(() {
+                                    _useAi = values.first;
+                                  });
+                                },
                         ),
                       ],
                     ),
@@ -117,10 +144,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                   onPressed: scanState.status == ScanStatus.scanning
                       ? null
                       : () async {
-                          ref.read(scanStateProvider.notifier).startScan(maxPhotos: _maxPhotos, incremental: _incremental, profile: profile);
+                          debugPrint('[ScanScreen] avvio scansione: maxPhotos=$_maxPhotos, incremental=$_incremental, useAi=$_useAi');
+                          ref.read(scanStateProvider.notifier).startScan(
+                                maxPhotos: _maxPhotos,
+                                incremental: _incremental,
+                                useAi: _useAi,
+                                profile: profile,
+                              );
                         },
                   icon: const Icon(Icons.search),
-                  label: Text(scanState.status == ScanStatus.scanning ? 'Scansione in corso...' : 'Avvia scansione'),
+                  label: Text(
+                    scanState.status == ScanStatus.scanning
+                        ? 'Scansione in corso...'
+                        : (_useAi ? 'Avvia scansione completa (IA)' : 'Avvia scansione base (senza IA)'),
+                  ),
                 ),
                 if (scanState.status == ScanStatus.done || scanState.status == ScanStatus.error)
                   TextButton(

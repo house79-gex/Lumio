@@ -1,20 +1,41 @@
+import 'package:flutter/foundation.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_manager/photo_manager.dart';
 
 class GalleryService {
-  /// Richiedi permessi e restituisci true se concessi
+  /// Richiedi permessi e restituisci true se concessi.
+  ///
+  /// - Prima prova tramite `photo_manager` (dialog nativo galleria).
+  /// - Se fallisce, fa un secondo tentativo con `permission_handler`
+  ///   (Storage / Foto), poi ricontrolla lo stato di `photo_manager`.
   Future<bool> requestPermission() async {
     final status = await PhotoManager.requestPermissionExtend(
       requestOption: const PermissionRequestOption(),
     );
-    return status.isAuth;
+    debugPrint('[GalleryService] requestPermission PhotoManager -> '
+        'isAuth=${status.isAuth}, hasAccess=${status.hasAccess}');
+    if (status.isAuth || status.hasAccess) return true;
+
+    // Tentativo extra con permission_handler (alcuni device/OEM sono più "capricciosi")
+    final ph = await Permission.photos.request();
+    debugPrint('[GalleryService] Permission.photos.request() -> $ph');
+
+    final stateAfter = await PhotoManager.getPermissionState(
+      requestOption: const PermissionRequestOption(),
+    );
+    debugPrint('[GalleryService] after permission_handler PhotoManager -> '
+        'isAuth=${stateAfter.isAuth}, hasAccess=${stateAfter.hasAccess}');
+    return stateAfter.isAuth || stateAfter.hasAccess;
   }
 
-  /// Controlla se abbiamo accesso
+  /// Controlla se abbiamo accesso effettivo alla galleria.
   Future<bool> hasAccess() async {
     final state = await PhotoManager.getPermissionState(
       requestOption: const PermissionRequestOption(),
     );
-    return state.isAuth;
+    debugPrint('[GalleryService] hasAccess PhotoManager -> '
+        'isAuth=${state.isAuth}, hasAccess=${state.hasAccess}');
+    return state.isAuth || state.hasAccess;
   }
 
   /// Carica asset foto dalla galleria (solo immagini)

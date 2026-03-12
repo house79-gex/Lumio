@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import '../core/constants/gemini_prompts.dart';
 import '../core/utils/image_utils.dart';
@@ -24,10 +25,14 @@ class AIService {
     final model = _model;
     if (model == null) return false;
     try {
-      final response = await model.generateContent([Content.text('ok')]);
-      final text = response.text?.toLowerCase() ?? '';
-      return text.contains('ok');
-    } catch (_) {
+      // Qualsiasi risposta valida dal modello viene considerata "chiave OK".
+      // Se la chiave è sbagliata o ha problemi di quota/progetto, verrà lanciata un'eccezione.
+      final response = await model.generateContent(
+        [Content.text('Test chiave API PhotoAI Catalog.')],
+      );
+      return response.text != null && response.text!.trim().isNotEmpty;
+    } catch (e, st) {
+      debugPrint('[AIService] testApiKey error: $e\n$st');
       return false;
     }
   }

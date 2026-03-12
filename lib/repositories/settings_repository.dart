@@ -70,6 +70,40 @@ class SettingsRepository {
     }
   }
 
+  // ------------------------
+  // Raggruppamento "grezzo" (senza IA)
+  // ------------------------
+
+  Future<bool> getGroupByYear() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(AppConstants.prefsKeyGroupByYear) ?? true;
+  }
+
+  Future<void> setGroupByYear(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.prefsKeyGroupByYear, value);
+  }
+
+  Future<bool> getGroupByMonth() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(AppConstants.prefsKeyGroupByMonth) ?? false;
+  }
+
+  Future<void> setGroupByMonth(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.prefsKeyGroupByMonth, value);
+  }
+
+  Future<bool> getGroupBySource() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(AppConstants.prefsKeyGroupBySource) ?? true;
+  }
+
+  Future<void> setGroupBySource(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(AppConstants.prefsKeyGroupBySource, value);
+  }
+
   static const String _keyProfiles = 'user_profiles';
 
   Future<void> saveProfile(UserProfile profile) async {

@@ -15,3 +15,10 @@ final initGeminiKeyProvider = FutureProvider<void>((ref) async {
   final key = await repo.getGeminiApiKey();
   service.setApiKey(key);
 });
+
+/// Ritorna true se esiste una chiave IA salvata (anche se non ancora testata).
+final aiEnabledProvider = FutureProvider<bool>((ref) async {
+  final repo = ref.watch(settingsRepositoryProvider);
+  final key = await repo.getGeminiApiKey();
+  return key != null && key.trim().isNotEmpty;
+});

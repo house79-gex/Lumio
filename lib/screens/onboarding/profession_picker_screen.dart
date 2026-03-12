@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/profession.dart';
 import '../../providers/professions_provider.dart';
@@ -17,6 +18,7 @@ class _ProfessionPickerScreenState extends ConsumerState<ProfessionPickerScreen>
   final _uuid = const Uuid();
 
   Future<void> _selectProfession(Profession profession) async {
+    debugPrint('[ProfessionPicker] selezionata professione: ${profession.name}');
     final profile = UserProfile(
       id: _uuid.v4(),
       name: profession.name,
@@ -29,6 +31,7 @@ class _ProfessionPickerScreenState extends ConsumerState<ProfessionPickerScreen>
     await _settingsRepo.saveProfile(profile);
     await _settingsRepo.setActiveProfileId(profile.id);
     await _settingsRepo.setOnboardingDone(true);
+    debugPrint('[ProfessionPicker] profilo creato e salvato: id=${profile.id}');
     if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
   }
