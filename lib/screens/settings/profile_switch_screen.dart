@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/profession.dart';
 import '../../providers/profile_provider.dart';
 import '../../repositories/settings_repository.dart';
 

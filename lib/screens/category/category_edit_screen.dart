@@ -53,8 +53,9 @@ class _CategoryEditScreenState extends ConsumerState<CategoryEditScreen> {
                   subtitle: Text(cat.folderName),
                   trailing: PopupMenuButton<String>(
                     onSelected: (v) async {
-                      if (v == 'edit') _showEditCategory(context, profile, categories, i);
-                      else if (v == 'delete') {
+                      if (v == 'edit') {
+                        await _showEditCategory(context, profile, categories, i);
+                      } else if (v == 'delete') {
                         categories.removeAt(i);
                         await _saveProfile(profile.copyWith(categories: categories));
                         setState(() {});

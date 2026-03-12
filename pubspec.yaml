@@ -22,7 +22,6 @@ dependencies:
   connectivity_plus: ^6.0.5
   file_picker: ^8.0.0+1
   flutter_image_compress: ^2.1.0
-  workmanager: ^0.5.2
   google_sign_in: ^6.2.1
   extension_google_sign_in_as_googleapis_auth: ^2.0.13
   googleapis: ^13.0.0

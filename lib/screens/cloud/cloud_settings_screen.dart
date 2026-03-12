@@ -19,7 +19,8 @@ class _CloudSettingsScreenState extends ConsumerState<CloudSettingsScreen> {
     final drive = ref.read(googleDriveProvider);
     if (_driveAuthenticated == true) {
       await drive.signOut();
-      if (mounted) setState(() => _driveAuthenticated = false);
+      if (!mounted) return;
+      setState(() => _driveAuthenticated = false);
       return;
     }
     setState(() => _driveAuthLoading = true);
@@ -52,7 +53,8 @@ class _CloudSettingsScreenState extends ConsumerState<CloudSettingsScreen> {
 
   Future<void> _checkDriveAuth() async {
     final ok = await ref.read(googleDriveProvider).isAuthenticated;
-    if (mounted) setState(() => _driveAuthenticated = ok);
+    if (!mounted) return;
+    setState(() => _driveAuthenticated = ok);
   }
 
   @override
