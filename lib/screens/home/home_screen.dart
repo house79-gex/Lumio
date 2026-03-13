@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/foundation.dart';
 import '../album/album_list_screen.dart';
 import '../album/album_detail_screen.dart';
-import '../scan/scan_screen.dart';
-import '../settings/settings_screen.dart';
 import '../settings/api_key_setup_screen.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/albums_provider.dart';
 import '../../providers/ai_provider.dart';
 
+/// Home “pulita”: profilo, IA, anteprima album. Scansione → tab dedicato.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -21,9 +19,15 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PhotoAI Catalog'),
+        title: const Text('PhotoAI'),
         actions: [
-          IconButton(icon: const Icon(Icons.settings), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()))),
+          Tooltip(
+            message: 'Apri tutti gli album',
+            child: IconButton(
+              icon: const Icon(Icons.photo_library_outlined),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AlbumListScreen())),
+            ),
+          ),
         ],
       ),
       body: profileAsync.when(
@@ -54,66 +58,51 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Banner IA non configurata
                   aiEnabledAsync.when(
                     data: (enabled) {
                       if (enabled) return const SizedBox.shrink();
                       return Card(
                         color: Colors.amber.shade50,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(Icons.lightbulb_outline, color: Colors.amber),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'IA non ancora configurata',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Per creare album intelligenti in base al contenuto delle foto, attiva ora la chiave IA di Google Gemini.',
-                              ),
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const ApiKeySetupScreen()),
-                                    );
-                                  },
-                                  child: const Text('Configura IA ora'),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: ListTile(
+                          leading: const Icon(Icons.lightbulb_outline, color: Colors.amber),
+                          title: const Text('Attiva l\'IA'),
+                          subtitle: const Text('Serve per catalogare le foto per contenuto.'),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ApiKeySetupScreen())),
                         ),
                       );
                     },
                     loading: () => const SizedBox.shrink(),
                     error: (_, __) => const SizedBox.shrink(),
                   ),
+                  const SizedBox(height: 12),
+                  Card(
+                    elevation: 0,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: ListTile(
+                      leading: Text(profile.emoji, style: const TextStyle(fontSize: 36)),
+                      title: Text(profile.name),
+                      subtitle: Text('${profile.categories.length} categorie · scheda Altro per modificare'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         children: [
-                          Text(profile.emoji, style: const TextStyle(fontSize: 40)),
-                          const SizedBox(width: 16),
+                          Icon(Icons.folder_open, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(profile.name, style: Theme.of(context).textTheme.titleLarge),
-                                Text('${profile.categories.length} categorie', style: Theme.of(context).textTheme.bodySmall),
+                                Text('Primo utilizzo?', style: Theme.of(context).textTheme.titleSmall),
+                                const Text(
+                                  'Vai alla scheda Scansione in basso → "Scansiona tutto il dispositivo". '
+                                  'Vedrai barra di avanzamento e una notifica al termine.',
+                                  style: TextStyle(fontSize: 13),
+                                ),
                               ],
                             ),
                           ),
@@ -121,25 +110,20 @@ class HomeScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   albumsAsync.when(
                     data: (albums) {
-                      debugPrint('[HomeScreen] albums per profilo ${profile.id}: ${albums.length}');
                       if (albums.isEmpty) {
                         return Card(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
                             child: Column(
                               children: [
-                                const Icon(Icons.photo_library_outlined, size: 48),
+                                Icon(Icons.photo_library_outlined, size: 56, color: Theme.of(context).colorScheme.outline),
+                                const SizedBox(height: 12),
+                                const Text('Nessun album ancora'),
                                 const SizedBox(height: 8),
-                                const Text('Nessun album ancora. Avvia una scansione.'),
-                                const SizedBox(height: 16),
-                                FilledButton.icon(
-                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanScreen())),
-                                  icon: const Icon(Icons.search),
-                                  label: const Text('Nuova scansione'),
-                                ),
+                                const Text('Scheda Scansione → indicizza il dispositivo', textAlign: TextAlign.center),
                               ],
                             ),
                           ),
@@ -151,7 +135,7 @@ class HomeScreen extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Album (${albums.length})', style: Theme.of(context).textTheme.titleMedium),
+                              Text('Album recenti', style: Theme.of(context).textTheme.titleMedium),
                               TextButton(
                                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AlbumListScreen())),
                                 child: const Text('Vedi tutti'),
@@ -164,7 +148,7 @@ class HomeScreen extends ConsumerWidget {
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 1.1,
+                              childAspectRatio: 1.15,
                               crossAxisSpacing: 8,
                               mainAxisSpacing: 8,
                             ),
@@ -172,23 +156,22 @@ class HomeScreen extends ConsumerWidget {
                             itemBuilder: (context, i) {
                               final album = albums[i];
                               return Card(
+                                clipBehavior: Clip.antiAlias,
                                 child: InkWell(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => AlbumDetailScreen(albumId: album.id, albumName: album.name),
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AlbumDetailScreen(albumId: album.id, albumName: album.name),
+                                    ),
+                                  ),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(8),
+                                    padding: const EdgeInsets.all(10),
                                     child: Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
-                                        Text(album.emoji ?? '📁', style: const TextStyle(fontSize: 32)),
+                                        Text(album.emoji ?? '📁', style: const TextStyle(fontSize: 28)),
                                         const SizedBox(height: 4),
-                                        Text(album.name, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+                                        Text(album.name, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
                                         Text('${album.photoCount} foto', style: Theme.of(context).textTheme.bodySmall),
                                       ],
                                     ),
@@ -197,16 +180,10 @@ class HomeScreen extends ConsumerWidget {
                               );
                             },
                           ),
-                          const SizedBox(height: 24),
-                          FilledButton.icon(
-                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanScreen())),
-                            icon: const Icon(Icons.search),
-                            label: const Text('Nuova scansione'),
-                          ),
                         ],
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())),
                     error: (e, _) => Text('Errore: $e'),
                   ),
                 ],

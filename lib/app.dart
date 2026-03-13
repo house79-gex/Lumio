@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/onboarding/welcome_screen.dart';
 import 'screens/onboarding/profession_picker_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/home/main_shell.dart';
 import 'providers/ai_provider.dart';
 import 'providers/profile_provider.dart';
 
@@ -27,7 +27,7 @@ class App extends ConsumerWidget {
       routes: {
         '/welcome': (context) => const WelcomeScreen(),
         '/profession_picker': (context) => const ProfessionPickerScreen(),
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const MainShell(),
       },
     );
   }
@@ -40,7 +40,7 @@ class _StartupRouter extends ConsumerWidget {
     final onboardingAsync = ref.watch(onboardingDoneProvider);
 
     return onboardingAsync.when(
-      data: (done) => done ? const HomeScreen() : const WelcomeScreen(),
+      data: (done) => done ? const MainShell() : const WelcomeScreen(),
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       ),

@@ -24,32 +24,15 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _settingsRepo = SettingsRepository();
   final _apiKeyController = TextEditingController();
-  bool _groupByYear = true;
-  bool _groupByMonth = false;
-  bool _groupBySource = true;
-
   @override
   void initState() {
     super.initState();
     _loadApiKey();
-    _loadGroupingPrefs();
   }
 
   Future<void> _loadApiKey() async {
     final key = await _settingsRepo.getGeminiApiKey();
     if (mounted) _apiKeyController.text = key ?? '';
-  }
-
-  Future<void> _loadGroupingPrefs() async {
-    final byYear = await _settingsRepo.getGroupByYear();
-    final byMonth = await _settingsRepo.getGroupByMonth();
-    final bySource = await _settingsRepo.getGroupBySource();
-    if (!mounted) return;
-    setState(() {
-      _groupByYear = byYear;
-      _groupByMonth = byMonth;
-      _groupBySource = bySource;
-    });
   }
 
   Future<String> _readFileAsString(String path) => File(path).readAsString();
@@ -65,7 +48,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final profileAsync = ref.watch(activeProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Impostazioni')),
+      appBar: AppBar(title: const Text('Altro · Impostazioni')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -107,33 +90,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             },
             child: const Text('Salva chiave API'),
           ),
-          const Divider(height: 32),
-          const Text('Raggruppamento base (senza IA)', style: TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          const Text('Come vuoi che le foto siano raggruppate in modo \"grezzo\" prima della catalogazione IA.'),
-          SwitchListTile(
-            title: const Text('Raggruppa per anno'),
-            value: _groupByYear,
-            onChanged: (v) async {
-              setState(() => _groupByYear = v);
-              await _settingsRepo.setGroupByYear(v);
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Raggruppa per mese (anno/mese)'),
-            value: _groupByMonth,
-            onChanged: (v) async {
-              setState(() => _groupByMonth = v);
-              await _settingsRepo.setGroupByMonth(v);
-            },
-          ),
-          SwitchListTile(
-            title: const Text('Raggruppa per origine (WhatsApp, Fotocamera, ecc.)'),
-            value: _groupBySource,
-            onChanged: (v) async {
-              setState(() => _groupBySource = v);
-              await _settingsRepo.setGroupBySource(v);
-            },
+          ListTile(
+            leading: const Icon(Icons.folder_open),
+            title: const Text('Scansione e gruppi grezzi'),
+            subtitle: const Text('Spostato nella scheda «Scansione» in basso'),
+            enabled: false,
           ),
           const Divider(height: 32),
           const Text('Profilo attivo', style: TextStyle(fontWeight: FontWeight.bold)),

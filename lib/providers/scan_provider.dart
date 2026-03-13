@@ -28,7 +28,13 @@ class ScanNotifier extends StateNotifier<ScanState> {
     state = const ScanState();
   }
 
-  Future<void> startScan({int maxPhotos = 50, bool incremental = true, bool useAi = true, UserProfile? profile}) async {
+  Future<void> startScan({
+    int maxPhotos = 50,
+    bool incremental = true,
+    bool useAi = true,
+    bool scanAllDevice = false,
+    UserProfile? profile,
+  }) async {
     final p = profile ?? _profile.valueOrNull;
     if (p == null) {
       state = ScanState(status: ScanStatus.error, errorMessage: 'Seleziona un profilo');
@@ -38,11 +44,42 @@ class ScanNotifier extends StateNotifier<ScanState> {
     await _scanService.runScan(
       profile: p,
       onProgress: (s) => state = s,
-      maxPhotos: maxPhotos,
+      maxPhotos: scanAllDevice ? 0 : maxPhotos,
       incremental: incremental,
       useAi: useAi,
+      scanAllDevice: scanAllDevice,
     );
-    // Dopo una scansione completa, ricarichiamo gli album del profilo attivo.
+    _ref.invalidate(albumsForActiveProfileProvider);
+  }
+
+  /// Scansione completa dispositivo, solo grezzi (nessun limite 100), senza IA.
+  Future<void> startFullDeviceGrezza({bool incremental = true, UserProfile? profile}) async {
+    await startScan(
+      maxPhotos: 0,
+      incremental: incremental,
+      useAi: false,
+      scanAllDevice: true,
+      profile: profile,
+    );
+  }
+
+  /// Rimuove dal catalogo i file non più sul telefono, poi aggiunge le foto nuove (grezzo, senza IA).
+  Future<void> syncLibrary({UserProfile? profile}) async {
+    final p = profile ?? _profile.valueOrNull;
+    if (p == null) {
+      state = ScanState(status: ScanStatus.error, errorMessage: 'Seleziona un profilo');
+      return;
+    }
+    state = const ScanState(status: ScanStatus.scanning, total: 0, processed: 0);
+    await _scanService.purgeMissingPhotos();
+    await _scanService.runScan(
+      profile: p,
+      onProgress: (s) => state = s,
+      maxPhotos: 0,
+      incremental: true,
+      useAi: false,
+      scanAllDevice: true,
+    );
     _ref.invalidate(albumsForActiveProfileProvider);
   }
 }

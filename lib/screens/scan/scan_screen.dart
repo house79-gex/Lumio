@@ -149,6 +149,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                                 maxPhotos: _maxPhotos,
                                 incremental: _incremental,
                                 useAi: _useAi,
+                                scanAllDevice: false,
                                 profile: profile,
                               );
                         },

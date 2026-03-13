@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static Database? _db;
-  static const int _version = 1;
+  static const int _version = 2;
 
   static Future<Database> get database async {
     if (_db != null) return _db!;
@@ -19,7 +19,41 @@ class DatabaseHelper {
       path,
       version: _version,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS album_photos (
+          photo_id TEXT NOT NULL,
+          album_id TEXT NOT NULL,
+          PRIMARY KEY (photo_id, album_id)
+        )
+      ''');
+      await db.execute('CREATE INDEX IF NOT EXISTS idx_album_photos_album ON album_photos(album_id)');
+      // Backfill: collega ogni foto agli album che condividono la stessa cartella (comportamento legacy)
+      final albums = await db.query('albums', columns: ['id', 'folder_path']);
+      for (final row in albums) {
+        final albumId = row['id'] as String;
+        final folderPath = row['folder_path'] as String?;
+        if (folderPath == null || folderPath.isEmpty) continue;
+        final photos = await db.query('photos', columns: ['id', 'local_folder_path']);
+        for (final p in photos) {
+          final localPath = p['local_folder_path'] as String?;
+          if (localPath == null || localPath.isEmpty) continue;
+          final dir = dirname(localPath);
+          if (dir == folderPath) {
+            await db.insert(
+              'album_photos',
+              {'photo_id': p['id'], 'album_id': albumId},
+              conflictAlgorithm: ConflictAlgorithm.ignore,
+            );
+          }
+        }
+      }
+    }
   }
 
   static Future<void> _onCreate(Database db, int version) async {
@@ -84,6 +118,14 @@ class DatabaseHelper {
         updated_at INTEGER
       )
     ''');
+    await db.execute('''
+      CREATE TABLE album_photos (
+        photo_id TEXT NOT NULL,
+        album_id TEXT NOT NULL,
+        PRIMARY KEY (photo_id, album_id)
+      )
+    ''');
+    await db.execute('CREATE INDEX idx_album_photos_album ON album_photos(album_id)');
     await db.execute('''
       CREATE TABLE persons (
         id TEXT PRIMARY KEY,

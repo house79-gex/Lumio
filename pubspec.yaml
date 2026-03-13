@@ -27,6 +27,8 @@ dependencies:
   googleapis: ^13.0.0
   googleapis_auth: ^1.4.1
   google_mlkit_face_detection: ^0.10.0
+  flutter_local_notifications: ^18.0.1
+  wakelock_plus: ^1.2.8
 
 dev_dependencies:
   flutter_test:

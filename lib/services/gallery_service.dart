@@ -38,7 +38,19 @@ class GalleryService {
     return state.isAuth || state.hasAccess;
   }
 
-  /// Carica asset foto dalla galleria (solo immagini)
+  /// Numero totale immagini nel primo album di sistema (tipicamente “Recenti” = tutte le foto).
+  Future<int> getTotalImageCount() async {
+    final hasPermission = await hasAccess();
+    if (!hasPermission) {
+      final granted = await requestPermission();
+      if (!granted) return 0;
+    }
+    final albums = await PhotoManager.getAssetPathList(type: RequestType.image);
+    if (albums.isEmpty) return 0;
+    return await albums.first.assetCountAsync;
+  }
+
+  /// Carica asset foto dalla galleria (solo immagini). [limit] null = tutte da [start] in poi.
   Future<List<AssetEntity>> getImageAssets({int? limit, int start = 0}) async {
     final hasPermission = await hasAccess();
     if (!hasPermission) {
@@ -50,6 +62,7 @@ class GalleryService {
     final path = albums.first;
     final total = await path.assetCountAsync;
     final end = limit != null ? (start + limit).clamp(0, total) : total;
+    if (start >= end) return [];
     final list = await path.getAssetListRange(start: start, end: end);
     return list;
   }
